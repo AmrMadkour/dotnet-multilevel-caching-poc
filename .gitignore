@@ -55,3 +55,15 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# Visual Studio IDE cache/options (machine-specific, not shared)
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+
+# SQLite databases (generated locally by EF Core migrations, not committed)
+*.db
+*.db-shm
+*.db-wal
+*.db-journal
