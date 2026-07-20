@@ -22,9 +22,11 @@ No test project exists yet.
 ## Architecture
 
 - Single project: `CachingPoc.Api/` — an ASP.NET Core **minimal API** (no controllers) targeting **.NET 10**.
-- `Program.cs` is the composition root: service registration (DI), middleware pipeline, and route definitions (`app.MapGet(...)`) all live here rather than being split into controller classes.
+- `Program.cs` is the composition root: service registration (DI) and middleware pipeline live here — no controller classes. Route definitions are grouped into extension methods under `CachingPoc.Api/Endpoints/` (namespace `CachingPoc.Api.Endpoints`), e.g. `ProductEndpoints.MapProductEndpoints(this IEndpointRouteBuilder app)`, called once from `Program.cs` as `app.MapProductEndpoints()`.
 - Entity classes live under `CachingPoc.Api/Models/` (namespace `CachingPoc.Api.Models`) — e.g. `Product` (`Id`, `Name`, `Price`). No Data Annotations are used; EF Core conventions (Id → key, non-nullable reference types → `NOT NULL`) cover what's needed for this POC.
-- Data access is EF Core over SQLite (`Microsoft.EntityFrameworkCore.Sqlite`), with `Microsoft.EntityFrameworkCore.Design` providing migration tooling. The SQLite file is a local artifact, not committed.
+- `AppDbContext` lives under `CachingPoc.Api/Data/` (namespace `CachingPoc.Api.Data`), registered via `AddDbContext` in `Program.cs` with its connection string read from `ConnectionStrings:Default` in `appsettings.json`.
+- Data access is EF Core over SQLite (`Microsoft.EntityFrameworkCore.Sqlite`), with `Microsoft.EntityFrameworkCore.Design`/`.Tools` providing migration tooling. The SQLite file is a local artifact, not committed.
+- `SQLitePCLRaw.lib.e_sqlite3`'s known advisory (GHSA-2m69-gcr7-jv3q) is suppressed via `NuGetAuditSuppress` in the `.csproj` — no fixed upstream package exists yet as of this POC; revisit when one ships.
 - The API is being built up in the milestone order defined in `docs/caching-poc-spec.md`:
   1. DB-only baseline (`source: "db"`, artificial delay to simulate a slow query)
   2. Add `IMemoryCache` (L1) — cache hits report `source: "memory"`
@@ -35,19 +37,25 @@ No test project exists yet.
   Every response is expected to report which layer served it (`source` field), so caching behavior is provable via response + timing, not assumed.
 - Redis itself runs as a single local Docker container (`docker run -p 6379:6379 redis`) starting at Milestone 3 — the .NET app itself is not containerized in this POC.
 
-## Current progress (Milestone 1 — baseline DB-only endpoint)
+## Current progress
 
-Working through Milestone 1 step by step. Status as of this session:
+**Milestone 1 (baseline DB-only endpoint) — complete:**
 
 - [x] Project created: `CachingPoc.Api` (.NET 10 minimal API, OpenAPI enabled)
-- [x] NuGet packages added: `Microsoft.EntityFrameworkCore.Sqlite`, `Microsoft.EntityFrameworkCore.Design`
+- [x] NuGet packages added: `Microsoft.EntityFrameworkCore.Sqlite`, `.Design`, `.Tools`
 - [x] `Product` model created (`CachingPoc.Api/Models/Product.cs`)
-- [ ] `AppDbContext` (DbSet + `OnModelCreating` seed data via `HasData`) — **next step**
-- [ ] SQLite connection string in `appsettings.json`
-- [ ] Register `AppDbContext` in `Program.cs` (`AddDbContext`)
-- [ ] Run `Add-Migration` / `Update-Database` to create the `.db` file + seed rows
-- [ ] `GET /products/{id}` endpoint (`Task.Delay(500)` + `source: "db"`), replacing the template's `/weatherforecast`
-- [ ] Verify baseline: ~500ms per call, every time
+- [x] `AppDbContext` (DbSet + `OnModelCreating` seed data via `HasData`) — `CachingPoc.Api/Data/AppDbContext.cs`
+- [x] SQLite connection string in `appsettings.json` (`ConnectionStrings:Default`)
+- [x] Registered `AppDbContext` in `Program.cs` (`AddDbContext`)
+- [x] Ran `Add-Migration InitialCreate` / `Update-Database` — `.db` file + seed rows created
+- [x] `GET /products/{id}` endpoint (`Task.Delay(500)` + `source: "db"`) — `CachingPoc.Api/Endpoints/ProductEndpoints.cs`, replacing the template's `/weatherforecast`
+- [x] Verified baseline: ~500ms per call, every time, via `CachingPoc.Api.http`
+
+**Milestone 2 (add `IMemoryCache` L1) — in progress:**
+
+- [x] `builder.Services.AddMemoryCache()` registered in `Program.cs`
+- [x] `IMemoryCache cache` parameter added to the `GetProduct` handler signature in `ProductEndpoints.cs`
+- [ ] Cache-check/populate logic itself (`TryGetValue` → `source: "memory"` on hit; `Set` after DB fetch on miss) — **not yet pasted in, paused mid-step, resume here**
 
 ## How we work in this repo
 

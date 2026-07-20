@@ -6,16 +6,28 @@ Full milestone plan: [`docs/caching-poc-spec.md`](docs/caching-poc-spec.md).
 
 ## Status
 
-🚧 **Milestone 1 in progress** — baseline `GET /products/{id}` endpoint reading directly from SQLite via EF Core, no caching yet.
+✅ **Milestone 1 complete** — baseline `GET /products/{id}` endpoint reading directly from SQLite via EF Core, no caching.
+🚧 **Milestone 2 in progress** — wiring in `IMemoryCache` (L1).
 
 ## Project structure
 
-- `CachingPoc.Api/` — single ASP.NET Core minimal API project (.NET 10). Holds `Program.cs`, the `Product` model, `AppDbContext`, and EF Core migrations.
+- `CachingPoc.Api/` — single ASP.NET Core minimal API project (.NET 10).
+  - `Program.cs` — composition root: DI registration and middleware pipeline.
+  - `Endpoints/` — route definitions, grouped as `IEndpointRouteBuilder` extension methods (e.g. `ProductEndpoints`).
+  - `Models/` — entity classes (e.g. `Product`).
+  - `Data/` — `AppDbContext` (EF Core).
+  - `Migrations/` — EF Core migrations.
 - `docs/` — spec and design notes.
 
 ## Running locally
 
-Open `CachingPoc.Api.slnx` in Visual Studio 2022+ and press **F5** (or `dotnet run --project CachingPoc.Api`).
+1. Open `CachingPoc.Api.slnx` in Visual Studio 2022+.
+2. Apply EF Core migrations to create the local SQLite database (Package Manager Console, with `CachingPoc.Api` set as the default project):
+   ```
+   Update-Database
+   ```
+   (Equivalently: `dotnet ef database update --project CachingPoc.Api`.)
+3. Press **F5** (or `dotnet run --project CachingPoc.Api`).
 
 The API listens on the port shown in the console / `CachingPoc.Api/Properties/launchSettings.json`. With OpenAPI enabled, you can browse `/openapi/v1.json` in development.
 
