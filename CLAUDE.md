@@ -76,10 +76,12 @@ No test project exists yet.
 - [x] `CachingPoc.Api.http` updated with `GET`/`PUT`/`DELETE` sample requests (replacing stale `/weatherforecast` sample)
 - [x] User confirmed working end-to-end (memory/Redis/DB fallthrough, TTL expiry, write invalidation, cache-clear 204/404)
 
-**Milestone 5 (README + GitHub) — README done, push pending:**
+**Milestone 5 (README + GitHub) — complete:**
 
 - [x] `README.md` updated: Milestone 4 status, `PUT`/`DELETE` endpoint docs, TTL/invalidation testing steps, approximate measured timings table, "Going to production" section (clustering, persistence, auth — documented only, not implemented)
-- [ ] Push to GitHub
+- [x] Pushed to GitHub (`origin/main` @ `db02791`)
+
+**All 5 milestones complete — POC finished per `docs/caching-poc-spec.md`.**
 
 ## How we work in this repo
 
