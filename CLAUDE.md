@@ -51,11 +51,35 @@ No test project exists yet.
 - [x] `GET /products/{id}` endpoint (`Task.Delay(500)` + `source: "db"`) — `CachingPoc.Api/Endpoints/ProductEndpoints.cs`, replacing the template's `/weatherforecast`
 - [x] Verified baseline: ~500ms per call, every time, via `CachingPoc.Api.http`
 
-**Milestone 2 (add `IMemoryCache` L1) — in progress:**
+**Milestone 2 (add `IMemoryCache` L1) — complete:**
 
 - [x] `builder.Services.AddMemoryCache()` registered in `Program.cs`
 - [x] `IMemoryCache cache` parameter added to the `GetProduct` handler signature in `ProductEndpoints.cs`
-- [ ] Cache-check/populate logic itself (`TryGetValue` → `source: "memory"` on hit; `Set` after DB fetch on miss) — **not yet pasted in, paused mid-step, resume here**
+- [x] Cache-check/populate logic (`TryGetValue` → `source: "memory"` on hit; `Set` after DB fetch on miss) — `CachingPoc.Api/Endpoints/ProductEndpoints.cs`
+- [x] Verified: first call ~500ms+ `source: "db"`, second call near-instant `source: "memory"`
+
+**Milestone 3 (add Redis L2) — complete:**
+
+- [x] Redis running locally via `docker run -p 6379:6379 redis`
+- [x] `StackExchange.Redis` NuGet package added
+- [x] Redis connection string in `appsettings.json` (`ConnectionStrings:Redis`)
+- [x] `IConnectionMultiplexer` registered as a singleton in `Program.cs`
+- [x] `GetProduct` extended to 3-tier lookup (memory → Redis → DB), each miss populating the faster layer(s) — `CachingPoc.Api/Endpoints/ProductEndpoints.cs`
+- [x] Verified: memory hit → `source: "memory"`; app restart + Redis still populated → `source: "redis"`; cold miss on both → `source: "db"`, repopulates both layers
+
+**Milestone 4 (TTLs + write-path invalidation) — complete:**
+
+- [x] Endpoint handlers split into named static methods (`GetProduct`, `UpdateProductPrice`, `ClearProductCache`) instead of inline lambdas in `MapProductEndpoints` — `CachingPoc.Api/Endpoints/ProductEndpoints.cs`
+- [x] Absolute expiration added to both cache layers, deliberately different (`MemoryTtl` = 30s, `RedisTtl` = 2min) — `CachingPoc.Api/Endpoints/ProductEndpoints.cs`
+- [x] `PUT /products/{id}` (`UpdateProductPriceRequest` body) updates the DB row, then overwrites both cache layers with the fresh product + fresh TTLs — `CachingPoc.Api/Endpoints/ProductEndpoints.cs`
+- [x] `DELETE /cache/{id}` checks memory + Redis for an existing entry first (404 if neither has it), otherwise clears both layers — `CachingPoc.Api/Endpoints/ProductEndpoints.cs`
+- [x] `CachingPoc.Api.http` updated with `GET`/`PUT`/`DELETE` sample requests (replacing stale `/weatherforecast` sample)
+- [x] User confirmed working end-to-end (memory/Redis/DB fallthrough, TTL expiry, write invalidation, cache-clear 204/404)
+
+**Milestone 5 (README + GitHub) — README done, push pending:**
+
+- [x] `README.md` updated: Milestone 4 status, `PUT`/`DELETE` endpoint docs, TTL/invalidation testing steps, approximate measured timings table, "Going to production" section (clustering, persistence, auth — documented only, not implemented)
+- [ ] Push to GitHub
 
 ## How we work in this repo
 

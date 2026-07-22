@@ -1,6 +1,19 @@
 @CachingPoc.Api_HostAddress = http://localhost:5164
 
-GET {{CachingPoc.Api_HostAddress}}/weatherforecast/
+GET {{CachingPoc.Api_HostAddress}}/products/1
 Accept: application/json
+
+###
+
+PUT {{CachingPoc.Api_HostAddress}}/products/1
+Content-Type: application/json
+
+{
+  "price": 19.99
+}
+
+###
+
+DELETE {{CachingPoc.Api_HostAddress}}/cache/1
 
 ###
